@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="AgriMind AI — Smart Agricultural Decision Support Platform">
+    <title>AgriMind AI | Smart Farming Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="{% if current_user.is_authenticated %}app-body{% else %}public-body-bg{% endif %}">
+
+{% if current_user.is_authenticated %}
+<!-- ════════════════════ SIDEBAR ════════════════════ -->
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="logo">
+            <i class="fa-solid fa-leaf"></i>
+            AgriMind
+        </div>
+        <div class="logo-sub">AI Farming Platform</div>
+    </div>
+
+    <ul class="nav-menu">
+        <li class="nav-group-label">Main</li>
+        <li>
+            <a href="{{ url_for('dashboard') }}" class="nav-item active" data-view="dashboard" id="nav-dashboard">
+                <i class="fa-solid fa-house"></i> Dashboard
+            </a>
+        </li>
+
+        <li class="nav-group-label">AI Modules</li>
+        <li>
+            <a href="#" class="nav-item" data-view="crop" id="nav-crop">
+                <i class="fa-solid fa-seedling"></i> Crop Prediction
+            </a>
+        </li>
+        <li>
+            <a href="#" class="nav-item" data-view="price" id="nav-price">
+                <i class="fa-solid fa-chart-line"></i> Market Price
+            </a>
+        </li>
+        <li>
+            <a href="#" class="nav-item" data-view="disease" id="nav-disease">
+                <i class="fa-solid fa-stethoscope"></i> Disease Detection
+            </a>
+        </li>
+        <li>
+            <a href="#" class="nav-item" data-view="yield" id="nav-yield">
+                <i class="fa-solid fa-gauge-high"></i> Yield Optimizer
+            </a>
+        </li>
+
+        <li class="nav-group-label">Tools</li>
+        <li>
+            <a href="#" class="nav-item" data-view="chatbot" id="nav-chatbot">
+                <i class="fa-solid fa-robot"></i> AI Assistant
+            </a>
+        </li>
+        <li>
+            <a href="{{ url_for('profile') }}" class="nav-item" data-view="profile" id="nav-profile">
+                <i class="fa-solid fa-user-gear"></i> Profile
+            </a>
+        </li>
+    </ul>
+
+    <div class="sidebar-footer">
+        <a href="{{ url_for('logout') }}">
+            <i class="fa-solid fa-right-from-bracket"></i> Logout
+        </a>
+    </div>
+</aside>
+
+<!-- ════════════════════ MAIN CONTENT ════════════════════ -->
+<main class="main-content">
+    <header class="top-header">
+        <div class="header-left">
+            <h2 id="page-title">Dashboard</h2>
+        </div>
+        <div class="header-right">
+            <span class="user-pill">
+                <i class="fa-solid fa-circle-user"></i>
+                {{ current_user.username }}
+            </span>
+            <button id="dark-mode-toggle" title="Toggle dark mode">
+                <i class="fa-solid fa-moon"></i>
+            </button>
+        </div>
+    </header>
+
+    <div class="view-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </div>
+</main>
+
+{% else %}
+<div class="public-page">
+    <!-- ════════════════════ PUBLIC NAV ════════════════════ -->
+    <nav class="public-nav">
+        <div class="logo">
+            <i class="fa-solid fa-leaf"></i> AgriMind AI
+        </div>
+        <div class="public-nav-links">
+            <a href="{{ url_for('login') }}">Login</a>
+            <a href="{{ url_for('register') }}">Register</a>
+        </div>
+    </nav>
+
+    <div class="public-content-wrapper">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages" style="max-width:500px;margin:1rem auto;padding:0 1rem; position: relative; z-index: 10;">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        {% block public_content %}{% endblock %}
+    </div>
+</div>
+{% endif %}
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

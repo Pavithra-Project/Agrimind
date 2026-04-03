@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block public_content %}
+<div class="landing-page-v2">
+    <!-- Section 1: Hero (Centered) -->
+    <section class="hero-v2">
+        <div class="hero-content">
+            <h1>Grow Smarter with AI-Powered Farming</h1>
+            <p>Predict crops, market prices, plant diseases, and yield optimization with intelligent insights. AgriMind combines cutting-edge machine learning with agriculture to maximize your productivity.</p>
+            
+            <div class="hero-buttons">
+                {% if not current_user.is_authenticated %}
+                    <a href="{{ url_for('register') }}" class="btn-primary-v2">Get Started Free</a>
+                    <a href="{{ url_for('login') }}" class="btn-primary-v2">Sign In</a>
+                {% else %}
+                    <a href="{{ url_for('dashboard') }}" class="btn-primary-v2">Open Dashboard →</a>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 2: Features (Separate Block) -->
+    <section class="features-section">
+        <div class="features-container">
+            <h2>Our AI-Powered Features</h2>
+            <div class="features-grid-v2">
+                <div class="feature-card-v2 glass">
+                    <div class="feature-icon"><i class="fa-solid fa-seedling"></i></div>
+                    <h3>Crop Prediction</h3>
+                    <p>Receive precise crop recommendations based on soil health, climate data, and seasonal patterns.</p>
+                </div>
+                <div class="feature-card-v2 glass">
+                    <div class="feature-icon"><i class="fa-solid fa-chart-line"></i></div>
+                    <h3>Market Price</h3>
+                    <p>Forecast future market trends in ₹ INR and identify the optimal time to sell your produce.</p>
+                </div>
+                <div class="feature-card-v2 glass">
+                    <div class="feature-icon"><i class="fa-solid fa-stethoscope"></i></div>
+                    <h3>Disease Detection</h3>
+                    <p>Identify plant diseases instantly by uploading a leaf photo and get professional treatment plans.</p>
+                </div>
+                <div class="feature-card-v2 glass">
+                    <div class="feature-icon"><i class="fa-solid fa-gauge-high"></i></div>
+                    <h3>Yield Optimizer</h3>
+                    <p>Simulate various farm conditions to find the perfect formula for boosting your production.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block public_content %}
+<div class="auth-page">
+    <div class="auth-card glass">
+        <h2>Welcome Back</h2>
+        <p class="auth-subtitle">Sign in to your AgriMind account</p>
+
+        <form method="POST" action="{{ url_for('login') }}">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <div class="input-with-icon">
+                    <i class="fa-solid fa-user"></i>
+                    <input type="text" id="username" name="username" required autocomplete="username" class="form-control" placeholder="Your username">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <div class="input-with-icon">
+                    <i class="fa-solid fa-lock"></i>
+                    <input type="password" id="password" name="password" required autocomplete="current-password" class="form-control" placeholder="Your password">
+                </div>
+            </div>
+
+            <button type="submit" class="btn-primary" style="width: 100%; margin-top: 1rem;">
+                <i class="fa-solid fa-right-to-bracket"></i> Login
+            </button>
+        </form>
+
+        <div class="auth-footer">
+            <p>New here? <a href="{{ url_for('register') }}">Join AgriMind today →</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,446 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<!-- ════ 0. DASHBOARD VIEW ═══════════════════════ -->
+<div id="view-dashboard" class="content-view active">
+
+    <div class="welcome-banner">
+        <h2>Welcome back, {{ current_user.username }}! 👋</h2>
+        <p>Here's a live overview of your farm analytics and AI recommendations.</p>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <div class="kpi-icon" style="background: rgba(190,209,107,.15); color: #5a7a10;">
+                <i class="fa-solid fa-wheat-awn"></i>
+            </div>
+            <div class="kpi-info">
+                <span class="kpi-label">Recommended Crop</span>
+                <h3 id="kpi-crop">—</h3>
+            </div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon" style="background: rgba(11,23,12,.08); color: var(--clr-primary);">
+                <i class="fa-solid fa-indian-rupee-sign"></i>
+            </div>
+            <div class="kpi-info">
+                <span class="kpi-label">Expected Profit</span>
+                <h3 id="kpi-profit">—</h3>
+            </div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon" style="background: rgba(239,68,68,.1); color: #dc2626;">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <div class="kpi-info">
+                <span class="kpi-label">Risk Level</span>
+                <h3 id="kpi-risk">—</h3>
+            </div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon" style="background: rgba(245,158,11,.1); color: #d97706;">
+                <i class="fa-solid fa-magnifying-glass-chart"></i>
+            </div>
+            <div class="kpi-info">
+                <span class="kpi-label">Total Analyses</span>
+                <h3 id="kpi-analyses">—</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart + Insights -->
+    <div class="dashboard-main-grid">
+        <div class="chart-container">
+            <h3>Price Trends (₹ INR)</h3>
+            <p class="text-muted">Historical market data for major crops — 6 months</p>
+            <div style="height: 280px; margin-top: 1.25rem;">
+                <canvas id="dashboardPriceChart"></canvas>
+            </div>
+        </div>
+        <div class="insights-container">
+            <h3><i class="fa-solid fa-lightbulb" style="color:#d97706;"></i> AI Insights</h3>
+            <ul class="insight-list">
+                <li>
+                    <i class="fa-solid fa-calendar-check" style="color: var(--clr-success);"></i>
+                    Best month to sell: <strong id="insight-month">—</strong>
+                </li>
+                <li>
+                    <i class="fa-solid fa-arrow-trend-up" style="color: #3b82f6;"></i>
+                    Price trend: <strong id="insight-trend">—</strong>
+                </li>
+                <li>
+                    <i class="fa-solid fa-shield-halved" style="color: #6b7280;"></i>
+                    Farm security: <strong>Secure</strong>
+                </li>
+                <li>
+                    <i class="fa-solid fa-droplet" style="color: #0ea5e9;"></i>
+                    Irrigation advisory: <strong>Normal</strong>
+                </li>
+            </ul>
+            <div class="recent-activity">
+                <h4>Recent Activity</h4>
+                <div id="recent-list">
+                    <p class="text-muted" style="font-size:.85rem; padding:.5rem 0;">No activities logged yet.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ════ 1. CROP PREDICTION VIEW ════════════════ -->
+<div id="view-crop" class="content-view">
+    <div class="module-header">
+        <h3><i class="fa-solid fa-seedling" style="color: var(--clr-success);"></i> Crop Recommendation</h3>
+        <p>Enter your field conditions to receive an AI-powered crop recommendation.</p>
+    </div>
+    <div class="module-layout">
+        <div class="panel">
+            <form id="crop-form">
+                <div class="form-group">
+                    <label>Soil Type</label>
+                    <select id="soil_type" class="form-control" required>
+                        <option value="Loamy">Loamy</option>
+                        <option value="Clay">Clay</option>
+                        <option value="Sandy">Sandy</option>
+                        <option value="Peaty">Peaty</option>
+                        <option value="Saline">Saline</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Season</label>
+                        <select id="season" class="form-control" required>
+                            <option value="Summer">Summer</option>
+                            <option value="Winter">Winter</option>
+                            <option value="Monsoon">Monsoon</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Temperature (°C)</label>
+                        <input type="number" step="0.1" id="temperature" class="form-control" value="25" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Humidity (%)</label>
+                    <input type="number" step="0.1" id="humidity" class="form-control" value="60" required>
+                </div>
+                <button type="submit" class="btn-primary">
+                    <i class="fa-solid fa-microchip"></i> Analyze & Recommend
+                </button>
+            </form>
+        </div>
+        <div id="crop-result" class="result-panel">
+            <div class="spinner" style="display:none;"></div>
+            <div class="result-data" style="display:none;">
+                <div class="confidence-badge" id="res-crop-conf">AI Confidence: —</div>
+                <div class="result-value" id="res-crop-name">—</div>
+                <div class="insight-box">
+                    <strong><i class="fa-solid fa-brain"></i> AI Insight</strong>
+                    <p id="res-crop-desc" style="margin-top:.4rem;">—</p>
+                </div>
+            </div>
+            <div class="result-empty" style="display:block;">
+                <div class="empty-state">
+                    <i class="fa-solid fa-inbox"></i>
+                    <p>Fill in your field conditions and click Analyze.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ════ 2. MARKET PRICE VIEW ═══════════════════ -->
+<div id="view-price" class="content-view">
+    <div class="module-header">
+        <h3><i class="fa-solid fa-chart-line" style="color: #3b82f6;"></i> Market Price Forecaster</h3>
+        <p>Predict future crop prices and discover the best month to sell.</p>
+    </div>
+    <div class="module-layout">
+        <div class="panel">
+            <form id="price-form">
+                <div class="form-group">
+                    <label>Select Crop</label>
+                    <select id="price_crop" class="form-control" required>
+                        <option value="Wheat">Wheat</option>
+                        <option value="Rice">Rice</option>
+                        <option value="Corn">Corn</option>
+                        <option value="Cotton">Cotton</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Year</label>
+                        <input type="number" id="price_year" class="form-control" value="2025" min="2022" max="2030">
+                    </div>
+                    <div class="form-group">
+                        <label>Month</label>
+                        <select id="price_month" class="form-control">
+                            <option value="1">January</option>
+                            <option value="2">February</option>
+                            <option value="3">March</option>
+                            <option value="4">April</option>
+                            <option value="5">May</option>
+                            <option value="6">June</option>
+                            <option value="7">July</option>
+                            <option value="8">August</option>
+                            <option value="9">September</option>
+                            <option value="10">October</option>
+                            <option value="11">November</option>
+                            <option value="12">December</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn-primary">
+                    <i class="fa-solid fa-magnifying-glass-dollar"></i> Get Forecast
+                </button>
+            </form>
+        </div>
+        <div id="price-result" class="result-panel">
+            <div class="spinner" style="display:none;"></div>
+            <div class="result-data" style="display:none; width:100%;">
+                <p class="text-muted" style="margin-bottom:.25rem;">Predicted Price</p>
+                <div class="result-value" id="res-price-val">₹—</div>
+                <div class="advisory-box" id="res-price-desc"></div>
+                <div style="height:160px; margin-top:1.25rem;">
+                    <canvas id="priceChart"></canvas>
+                </div>
+            </div>
+            <div class="result-empty" style="display:block;">
+                <div class="empty-state">
+                    <i class="fa-solid fa-chart-simple"></i>
+                    <p>Select a crop and month to view forecast.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ════ 3. DISEASE DETECTION VIEW ═════════════ -->
+<div id="view-disease" class="content-view">
+    <div class="module-header">
+        <h3><i class="fa-solid fa-stethoscope" style="color: #ef4444;"></i> Crop Doctor</h3>
+        <p>Upload a photo of a plant leaf for instant AI-powered disease diagnosis.</p>
+    </div>
+    <div class="module-layout">
+        <div class="panel">
+            <form id="disease-form">
+                <div class="form-group">
+                    <div class="file-upload-area" id="drop-zone">
+                        <input type="file" id="leaf_image" accept="image/*" class="file-input">
+                        <label for="leaf_image" style="cursor:pointer; display:block;">
+                            <i class="fa-solid fa-cloud-arrow-up"></i>
+                            <p style="font-weight:500; margin-bottom:.25rem;">Click or drag to upload</p>
+                            <p class="text-muted" id="file-name" style="font-size:.8rem; margin-top:.25rem;">Supports JPG, PNG, WEBP</p>
+                        </label>
+                    </div>
+                </div>
+                <div id="image-preview" class="image-preview-box" style="display:none;">
+                    <img id="preview-img" src="#" alt="Leaf Preview">
+                </div>
+                <button type="submit" class="btn-primary mt-2">
+                    <i class="fa-solid fa-microscope"></i> Start Diagnosis
+                </button>
+            </form>
+        </div>
+        <div id="disease-result" class="result-panel">
+            <div class="spinner" style="display:none;"></div>
+            <div class="result-data" style="display:none; width:100%;">
+                <div class="disease-name" id="res-disease-name">—</div>
+                <div id="res-disease-meta" style="margin-bottom: .5rem;"></div>
+                <div class="treatment-box">
+                    <strong><i class="fa-solid fa-prescription-bottle-medical"></i> Treatment Plan</strong>
+                    <p id="res-disease-treatment" style="margin-top:.5rem; line-height:1.7;">—</p>
+                </div>
+            </div>
+            <div class="result-empty" style="display:block;">
+                <div class="empty-state">
+                    <i class="fa-solid fa-microscope"></i>
+                    <p>Upload a photo of the affected leaf to begin diagnosis.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ════ 4. YIELD OPTIMIZER VIEW ════════════════ -->
+<div id="view-yield" class="content-view">
+    <div class="module-header">
+        <h3><i class="fa-solid fa-gauge-high" style="color: #6366f1;"></i> Yield Optimizer</h3>
+        <p>Simulate your farm's conditions to identify yield improvements.</p>
+    </div>
+    <div class="module-layout">
+        <div class="panel">
+            <form id="yield-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Target Crop</label>
+                        <select id="yield_crop" class="form-control">
+                            <option value="Wheat">Wheat</option>
+                            <option value="Rice">Rice</option>
+                            <option value="Corn">Corn</option>
+                            <option value="Cotton">Cotton</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Soil Type</label>
+                        <select id="yield_soil" class="form-control">
+                            <option value="Loamy">Loamy</option>
+                            <option value="Clay">Clay</option>
+                            <option value="Sandy">Sandy</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Temperature (°C)</label>
+                        <input type="number" id="yield_temp" class="form-control" value="25">
+                    </div>
+                    <div class="form-group">
+                        <label>Humidity (%)</label>
+                        <input type="number" id="yield_hum" class="form-control" value="60">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Annual Rainfall (mm)</label>
+                    <input type="number" id="yield_rain" class="form-control" value="500">
+                </div>
+                <button type="submit" class="btn-primary">
+                    <i class="fa-solid fa-calculator"></i> Calculate Efficiency
+                </button>
+            </form>
+        </div>
+        <div id="yield-result" class="result-panel">
+            <div class="spinner" style="display:none;"></div>
+            <div class="result-data" style="display:none; width:100%;">
+                <p class="text-muted" style="font-size:.85rem; margin-bottom:.25rem;">Yield Efficiency Score</p>
+                <div class="yield-score" id="res-yield-perc">—</div>
+                <div class="yield-label">out of 100%</div>
+                <div class="progress-bar-wrap">
+                    <div class="progress-bar-fill" id="yield-progress" style="width:0%;"></div>
+                </div>
+                <div class="meta-tags">
+                    <span class="meta-tag" id="res-yield-impact">Impact: —</span>
+                    <span class="meta-tag" id="res-yield-boost">Boost: —</span>
+                </div>
+                <div id="res-yield-suggestions"></div>
+            </div>
+            <div class="result-empty" style="display:block;">
+                <div class="empty-state">
+                    <i class="fa-solid fa-chart-area"></i>
+                    <p>Submit your farm data to get efficiency scores and suggestions.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ════ 5. AI ASSISTANT VIEW ═══════════════════ -->
+<div id="view-chatbot" class="content-view">
+    <div class="module-header">
+        <h3><i class="fa-solid fa-robot" style="color: #8b5cf6;"></i> AI Farming Assistant</h3>
+        <p>Ask anything about crops, diseases, prices, or farm management.</p>
+    </div>
+
+    <div class="chatbot-wrapper">
+        <div class="chat-header">
+            <h3><i class="fa-solid fa-robot"></i> AgriMind Assistant</h3>
+            <span class="online-dot">Online</span>
+        </div>
+
+        <!-- Quick Suggestion Chips -->
+        <div class="chat-suggestions">
+            <button class="suggestion-chip" data-msg="What is the best crop for loamy soil in summer?">🌱 Best crop for loamy soil</button>
+            <button class="suggestion-chip" data-msg="What will be the future price of wheat?">📈 Future wheat price</button>
+            <button class="suggestion-chip" data-msg="How can I increase my crop yield?">🚀 Increase yield tips</button>
+            <button class="suggestion-chip" data-msg="My rice leaves have yellow spots. What disease is this?">🔬 Diagnose yellow spots</button>
+            <button class="suggestion-chip" data-msg="What is the best month to sell rice?">📅 Best month to sell rice</button>
+        </div>
+
+        <!-- Messages -->
+        <div id="chat-messages" class="chat-messages">
+            <div class="message ai-message">
+                👋 Hello! I'm your <strong>AgriMind AI Assistant</strong>. I can help you with crop recommendations, market prices, and disease analysis. What would you like to know?
+            </div>
+        </div>
+
+        <!-- Input -->
+        <form id="chat-form" class="chat-input-row">
+            <input type="text" id="chat-input" placeholder="Ask about crops, prices, diseases…" autocomplete="off">
+            <button type="submit" class="chat-send-btn">
+                <i class="fa-solid fa-paper-plane"></i>
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- ════ 6. PROFILE VIEW ═════════════════════════ -->
+<div id="view-profile" class="content-view">
+    <div class="module-header">
+        <h3><i class="fa-solid fa-user-gear"></i> Profile & My Activity</h3>
+        <p>Your personal account details and search history.</p>
+    </div>
+
+    <div class="panel">
+        <div class="profile-header">
+            <div class="profile-avatar">
+                <i class="fa-solid fa-user"></i>
+            </div>
+            <div>
+                <h3 id="prof-display-name">{{ current_user.username }}</h3>
+                <p class="text-muted" id="prof-display-email">Loading email...</p>
+            </div>
+        </div>
+
+        <div class="profile-info-grid">
+            <div class="info-item">
+                <label>Username</label>
+                <div class="value">{{ current_user.username }}</div>
+            </div>
+            <div class="info-item">
+                <label>Email Address</label>
+                <div class="value" id="prof-email-val">Loading...</div>
+            </div>
+            <div class="info-item">
+                <label>Account ID</label>
+                <div class="value">#{{ current_user.id }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel" style="margin-top: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
+            <h4 style="font-size: 1.1rem;"><i class="fa-solid fa-clock-rotate-left"></i> Previous Searches</h4>
+            <select id="history-filter" class="form-control" style="width: auto; padding: .4rem .8rem; font-size: .85rem;">
+                <option value="all">All Searches</option>
+                <option value="Crop Recommendation">Crop Prediction</option>
+                <option value="Price Prediction">Price Analysis</option>
+                <option value="Disease Detection">Disease Detection</option>
+                <option value="Yield Optimization">Yield Optimization</option>
+            </select>
+        </div>
+
+        <div class="history-table-container">
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Input Details</th>
+                        <th>Result</th>
+                        <th>Date & Time</th>
+                    </tr>
+                </thead>
+                <tbody id="history-list">
+                    <tr>
+                        <td colspan="4" style="text-align:center; padding: 2rem; color: var(--clr-muted);">
+                            Fetching history...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

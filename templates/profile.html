@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="profile-container">
+    <div class="profile-header card">
+        <div class="profile-info-grid">
+            <div class="profile-avatar">
+                <i class="fa-solid fa-circle-user"></i>
+            </div>
+            <div class="profile-details">
+                <h1 id="prof-username">{{ current_user.username }}</h1>
+                <p id="prof-email">{{ current_user.email }}</p>
+                <div class="profile-badges">
+                    <span class="badge bg-primary">Verified Farmer</span>
+                    <span class="badge bg-secondary">AI Enabled</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="history-section card">
+        <div class="section-header">
+            <h3><i class="fa-solid fa-history"></i> Search History</h3>
+            <div class="history-controls">
+                <input type="text" id="history-search" placeholder="Filter history..." class="form-control-sm">
+                <select id="history-sort" class="form-control-sm">
+                    <option value="latest">Latest First</option>
+                    <option value="oldest">Oldest First</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="history-list-wrapper">
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Input Details</th>
+                        <th>AI Result</th>
+                        <th>Date & Time</th>
+                    </tr>
+                </thead>
+                <tbody id="history-tbody">
+                    <!-- History rows will be populated by JS -->
+                    <tr>
+                        <td colspan="4" class="text-center">Loading history...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tbody = document.getElementById('history-tbody');
+    const searchInput = document.getElementById('history-search');
+    const sortSelect = document.getElementById('history-sort');
+    let historyData = [];
+
+    // Update page title in dashboard layout
+    const pageTitle = document.getElementById('page-title');
+    if (pageTitle) pageTitle.innerText = "User Profile & History";
+
+    async function fetchHistory() {
+        try {
+            const response = await fetch('/profile-details');
+            const data = await response.json();
+            historyData = data.history;
+            renderHistory();
+        } catch (error) {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-error">Error loading history.</td></tr>';
+        }
+    }
+
+    function renderHistory() {
+        let filtered = historyData.filter(h => 
+            h.type.toLowerCase().includes(searchInput.value.toLowerCase()) ||
+            h.result.toLowerCase().includes(searchInput.value.toLowerCase()) ||
+            h.input.toLowerCase().includes(searchInput.value.toLowerCase())
+        );
+
+        if (sortSelect.value === 'oldest') {
+            filtered.sort((a, b) => new Date(a.date) - new Date(b.date));
+        } else {
+            filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+        }
+
+        if (filtered.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center">No matching records found.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = filtered.map(h => {
+            // Clean up input JSON string if it looks like one
+            let displayInput = h.input;
+            try {
+                if (h.input.startsWith('{')) {
+                    const parsed = JSON.parse(h.input.replace(/'/g, '"'));
+                    displayInput = Object.entries(parsed)
+                        .map(([k, v]) => `${k.charAt(0).toUpperCase() + k.slice(1)}: ${v}`)
+                        .join(', ');
+                }
+            } catch (e) {}
+
+            return `
+                <tr>
+                    <td><span class="prediction-type-tag type-${h.type.toLowerCase().replace(/\s+/g, '-')}">${h.type}</span></td>
+                    <td class="input-cell">${displayInput}</td>
+                    <td><strong>${h.result}</strong></td>
+                    <td class="date-cell">${new Date(h.date).toLocaleString()}</td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    searchInput.addEventListener('input', renderHistory);
+    sortSelect.addEventListener('change', renderHistory);
+
+    fetchHistory();
+});
+</script>
+<style>
+.profile-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 1rem;
+}
+.profile-header {
+    background: white;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+.profile-info-grid {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+}
+.profile-avatar {
+    font-size: 5rem;
+    color: #95D5B2;
+}
+.profile-details h1 {
+    margin: 0;
+    font-size: 2rem;
+    color: #1B4332;
+}
+.profile-details p {
+    color: #666;
+    margin-bottom: 1rem;
+}
+.profile-badges {
+    display: flex;
+    gap: 0.5rem;
+}
+.badge {
+    padding: 0.4rem 0.8rem;
+    border-radius: 50px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+.bg-primary { background: #95D5B2; color: #1B4332; }
+.bg-secondary { background: #D8F3DC; color: #1B4332; }
+
+.history-section {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+}
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+.history-controls {
+    display: flex;
+    gap: 0.5rem;
+}
+.form-control-sm {
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    font-size: 0.9rem;
+}
+.history-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.history-table th {
+    text-align: left;
+    padding: 1rem;
+    background: #f8f9fa;
+    color: #666;
+    font-weight: 600;
+}
+.history-table td {
+    padding: 1rem;
+    border-bottom: 1px solid #eee;
+}
+.prediction-type-tag {
+    padding: 0.3rem 0.6rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+.type-crop-recommendation { background: #e3f2fd; color: #1976d2; }
+.type-price-prediction { background: #f1f8e9; color: #388e3c; }
+.type-disease-detection { background: #fff3e0; color: #f57c00; }
+.type-yield-optimization { background: #f3e5f5; color: #7b1fa2; }
+
+.history-list-wrapper {
+    overflow-x: auto;
+    max-height: 600px;
+    overflow-y: auto;
+}
+</style>
+{% endblock %}
