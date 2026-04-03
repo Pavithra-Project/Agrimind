@@ -508,6 +508,7 @@ def dashboard_stats():
         "chart_data": [18500, 19200, 18800, 20500, 21200, 22000]
     })
 
-
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=10000)
 if __name__ == '__main__':
     app.run(debug=True)
